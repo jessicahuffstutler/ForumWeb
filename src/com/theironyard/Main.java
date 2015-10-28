@@ -1,6 +1,7 @@
 package com.theironyard;
 
 import spark.ModelAndView;
+import spark.Session;
 import spark.Spark;
 import spark.template.mustache.MustacheTemplateEngine;
 
@@ -19,6 +20,9 @@ public class Main {
         Spark.get(
                 "/",
                 ((request, response) -> {
+                    Session session = request.session();
+                    String username = session.attribute("username");
+
                     //only want to display top level threads
                     ArrayList<Message> threads = new ArrayList();
                     for (Message message : messages) {
@@ -29,9 +33,38 @@ public class Main {
 
                     HashMap m = new HashMap();
                     m.put("threads", threads); //put the thread in the hashmap
+                    m.put("username", username); //put the username in the hashmap
                     return new ModelAndView(m, "threads.html");
                 }),
                 new MustacheTemplateEngine()
+        );
+
+        Spark.post(
+                "/login",
+                ((request, response) -> {
+                    String username = request.queryParams("username");
+                    String password = request.queryParams("password");
+
+                    if (username.isEmpty() || password.isEmpty()) {
+                        Spark.halt(403);
+                    }
+
+                    User user = users.get(username);
+                    if (user == null) {
+                        user = new User();
+                        user.password = password;
+                        users.put(username, user);
+                    }
+                    else if (password.equals(user.password)) {
+                        Spark.halt(403);
+                    }
+
+                    Session session = request.session();
+                    session.attribute("username", username); //multiple people can be logged in and they will each see their username
+
+                    response.redirect("/");
+                    return"";
+                })
         );
     }
 
