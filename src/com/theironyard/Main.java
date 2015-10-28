@@ -39,6 +39,32 @@ public class Main {
                 new MustacheTemplateEngine()
         );
 
+        Spark.get(
+                "/replies",
+                ((request, response) -> {
+                    HashMap m = new HashMap();
+
+                    String id = request.queryParams("id");
+                    try {
+                        int idNum = Integer.valueOf(id);
+                        Message message = messages.get(idNum);
+                        m.put("message", message);
+
+                        ArrayList<Message> replies = new ArrayList();
+                        for (Message msg : messages) {
+                            if (msg.replyId == message.id) {
+                                replies.add(msg);
+                            }
+                        }
+                        m.put("replies", replies);
+                    } catch (Exception e) {
+
+                    }
+                    return new ModelAndView(m, "replies.html");
+                }),
+                new MustacheTemplateEngine()
+        );
+
         Spark.post(
                 "/login",
                 ((request, response) -> {
@@ -79,6 +105,6 @@ public class Main {
         messages.add(new Message(0, -1, "Alice", "This is a thread!")); //top level thread (-1)
         messages.add(new Message(1, -1, "Bob", "This is a thread!")); //top level thread (-1)
         messages.add(new Message(2, 0, "Charlie", "Cool thread, Alice.")); //charlie replying to alice (0)
-        messages.add(new Message(3, 2, "Alice", "TThanks")); //Alice replying to Charlie (2)
+        messages.add(new Message(3, 2, "Alice", "Thanks")); //Alice replying to Charlie (2)
     }
 }
