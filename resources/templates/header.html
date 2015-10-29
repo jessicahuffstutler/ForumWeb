@@ -1,5 +1,10 @@
 {{#username}}
 Welcome, {{username}} <br>
+<form action="create-message" method="post">
+    <input type="hidden" name="replyId" value="{{replyId}}" />
+    <input type="text" name="text" placeholder="Write a Message" size="50" />
+    <button type="submit">Submit</button>
+</form>
 {{/username}}
 
 {{^username}}

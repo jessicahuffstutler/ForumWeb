@@ -34,6 +34,7 @@ public class Main {
                     HashMap m = new HashMap();
                     m.put("threads", threads); //put the thread in the hashmap
                     m.put("username", username); //put the username in the hashmap
+                    m.put("replyId", -1);
                     return new ModelAndView(m, "threads.html");
                 }),
                 new MustacheTemplateEngine()
@@ -42,13 +43,18 @@ public class Main {
         Spark.get(
                 "/replies",
                 ((request, response) -> {
+                    Session session = request.session();
+                    String username = session.attribute("username");
+
                     HashMap m = new HashMap();
+                    m.put("username", username); //telling the replies route to put the username from the session in the HashMap
 
                     String id = request.queryParams("id");
                     try {
                         int idNum = Integer.valueOf(id);
                         Message message = messages.get(idNum);
                         m.put("message", message);
+                        m.put("replyId", message.id); //message.id because we want to reply to that message from above
 
                         ArrayList<Message> replies = new ArrayList();
                         for (Message msg : messages) {
@@ -88,7 +94,32 @@ public class Main {
                     Session session = request.session();
                     session.attribute("username", username); //multiple people can be logged in and they will each see their username
 
-                    response.redirect("/");
+                    response.redirect(request.headers("Referer"));
+                    return"";
+                })
+        );
+
+        Spark.post(
+                "/create-message",
+                ((request, response) -> {
+                    Session session = request.session();
+                    String username = session.attribute("username");
+
+                    if (username == null) {
+                        Spark.halt(403);
+                    }
+
+                    String replyId = request.queryParams("replyId");
+                    String text = request.queryParams("text");
+                    try {
+                        int replyIdNum = Integer.valueOf(replyId); //getting value of reply id number
+                        Message message = new Message(messages.size(), replyIdNum, username, text); //creating message
+                        messages.add(message); //adding to arraylist
+                    } catch (Exception e) {
+
+                    }
+
+                    response.redirect(request.headers("Referer"));
                     return"";
                 })
         );
